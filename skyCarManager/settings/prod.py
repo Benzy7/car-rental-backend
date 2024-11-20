@@ -7,9 +7,12 @@ environ.Env.read_env()
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["skycars.ovh"]
+ALLOWED_HOSTS = ["skycars.ovh", "www.skycars.ovh", "dev.skycars.ovh"]
 CORS_ALLOWED_ORIGINS = [
-    "https://www.skycars.ovh/",
+    "http://www.skycars.ovh",
+    "https://www.skycars.ovh",
+    "http://dev.skycars.ovh",
+    "https://dev.skycars.ovh",
 ]
 
 SECRET_KEY = env('SECRET_KEY')
@@ -59,4 +62,51 @@ STORAGES = {
             "region_name": env("AWS_S3_REGION_NAME"),
         },
     }
+}
+
+###### LOG CONFIG ######
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': './logs/erros.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 5, 
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'skyCarManager': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR', 
+            'propagate': False,
+        },
+    },
 }
