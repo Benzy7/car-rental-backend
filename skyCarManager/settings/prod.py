@@ -14,6 +14,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://dev.skycars.ovh",
     "https://dev.skycars.ovh",
 ]
+CSRF_TRUSTED_ORIGINS=['https://*.skycars.ovh'] 
 
 SECRET_KEY = env('SECRET_KEY')
 
