@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from core.models.car import CarImage
+from core.models.car import CarModelImage
 
-class CarImageDeleteSerializer(serializers.ModelSerializer):
+class CarModelImageDeleteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CarImage
+        model = CarModelImage
         fields = ['id']
 
     def validate(self, attrs):

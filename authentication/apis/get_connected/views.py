@@ -5,10 +5,11 @@ from rest_framework import status
 from authentication.serializers.user.user_profile import UserProfileSerializer
 from core.utils.logger import exception_log
 from core.models.referral_code import ReferralCode
-from core.utils.code_generator import generate_user_referral_code
+from core.utils.code_generator import generate_referral_code
+from core.permissions.is_not_blacklisted import IsNotBlacklisted
 
 class GetConnectedView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotBlacklisted]
 
     def get(self, request):
         try:
@@ -22,7 +23,7 @@ class GetConnectedView(APIView):
                     defaults={'user_email': current_user.email}  
                 )
                 if created:
-                    referral_code.referral_code = generate_user_referral_code(current_user)
+                    referral_code.referral_code = generate_referral_code(current_user, code_type='user')
                     referral_code.save(update_fields=['referral_code', 'used_by_email'])
                 referral_code_value = referral_code.referral_code
             except Exception as ref_exception:

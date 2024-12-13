@@ -8,7 +8,7 @@ class CarCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
         fields = [
-            'car_make', 'car_model', 'car_type', 'car_class', 'title', 
-            'sub_title', 'description', 'transmission_type', 'fuel_type', 
-            'seats', 'price_per_day', 'is_unlimited', 'max_available_cars'
+            'car_make', 'car_model', 'car_type', 'car_class', 'car_version', 
+            'seats', 'description', 'transmission_type', 'fuel_type', 'year',
+            'month_price', 'price_per_day', 'year', 'is_unlimited', 'max_available_cars'
         ]

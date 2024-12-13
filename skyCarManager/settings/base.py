@@ -13,11 +13,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'storages',
     'core',
     'authentication',
     'automobile',
+    'partners',
+    'booking',
 ]
 
 MIDDLEWARE = [
@@ -38,11 +41,11 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),      # Default: 15 minutes
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),    # Default: 7 days
-    'ROTATE_REFRESH_TOKENS': False,                  # Optional: To rotate refresh tokens
-    'BLACKLIST_AFTER_ROTATION': False,               # Optional: To blacklist rotated tokens
-    'UPDATE_LAST_LOGIN': False,                      # Optional: Update last login on refresh
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), 
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
 }
 
 ROOT_URLCONF = 'skyCarManager.urls'

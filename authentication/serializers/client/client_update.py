@@ -1,27 +1,32 @@
 from rest_framework import serializers
-from core.models import User
+from core.models.user import User, Gender
+from core.models.parameters import Parameters
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 
 class ClientUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
-    gender = serializers.ChoiceField(choices=User.GENDER_CHOICES)
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'phone_number', 'gender', 'email', 'profile_picture']
+        fields = [
+            'email', 'first_name', 'last_name', 'phone_country_code', 'phone_number', 'profile_picture',
+        ]
         extra_kwargs = {
+            'email': {'required': True},
+            'phone_country_code': {'required': True},
             'phone_number': {'required': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
         }
 
     def validate_profile_picture(self, value):
-        # Limit file size to 5MB
-        max_size = 5 * 1024 * 1024
-        if value.size > max_size:
-            raise serializers.ValidationError("The image size should not exceed 5 MB.")
+        if value is not None:
+            params = Parameters.get_instance()
+            max_size = params.profile_picture_size * 1024 * 1024
+            if value.size > max_size:
+                raise serializers.ValidationError(f"The image size should not exceed {params.profile_picture_size} MB.")
         return value
 
     def update(self, instance, validated_data):

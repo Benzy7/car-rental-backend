@@ -1,7 +1,9 @@
 from django.db import models
+from django.core.validators import MinLengthValidator, RegexValidator
 from django.utils import timezone
 from django.conf import settings
 from core.models.base import TimestampedModel
+from core.models.partner import Partner
 
 def upload_make_logo(instance, filename):
     return f"{settings.FILES_FOLDER}/makes/logos/{filename}"
@@ -12,14 +14,14 @@ def upload_car_image(instance, filename):
 class CarType(models.TextChoices):
     SUV = 'SUV', 'SUV'
     SEDAN = 'Sedan', 'Sedan'
-    COUPE = 'Coupe', 'Coupe'
+    VAN = 'Van', 'Van'
     HATCHBACK = 'Hatchback', 'Hatchback'
     CONVERTIBLE = 'Convertible', 'Convertible'
-
+    
 class TransmissionType(models.TextChoices):
     MANUAL = 'Manual', 'Manual'
     AUTOMATIC = 'Automatic', 'Automatic'
-    SEMI_AUTOMATIC = 'Semi-automatic', 'Semi-automatic'
+    # SEMI_AUTOMATIC = 'Semi-automatic', 'Semi-automatic'
 
 class FuelType(models.TextChoices):
     PETROL = 'Petrol', 'Petrol'
@@ -31,6 +33,7 @@ class CarClassification(models.TextChoices):
     NORMAL = 'Normal', 'Normal'
     LUXE = 'Luxe', 'Luxe'
     SPORT = 'Sport', 'Sport'
+    UTILITY = 'Utility', 'Utility '
 
 class CarMake(TimestampedModel):
     name = models.CharField(max_length=100, unique=True)
@@ -43,7 +46,8 @@ class CarMake(TimestampedModel):
 class CarModel(TimestampedModel):
     make = models.ForeignKey(CarMake, on_delete=models.PROTECT, related_name="models")
     name = models.CharField(max_length=100)
-
+    description = models.TextField(blank=True)
+    
     def __str__(self):
         return f"{self.make.name} {self.name}"
 
@@ -53,16 +57,21 @@ class Car(TimestampedModel):
     car_type = models.CharField(max_length=20, choices=CarType.choices)
     car_class = models.CharField(max_length=10, choices=CarClassification.choices, default=CarClassification.NORMAL)
     
-    title = models.CharField(max_length=100, blank=True)
-    sub_title = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
+    year = models.CharField(max_length=4, validators=[
+        MinLengthValidator(4, message="Year must be exactly 4 characters."),
+        RegexValidator(regex=r'^\d{4}$', message='Year must be exactly 4 digits.')
+    ], blank=True)
+    
+    partner = models.ForeignKey(Partner, on_delete=models.CASCADE, null=True)
+    car_version = models.CharField(max_length=100, blank=True)
 
     transmission_type = models.CharField(max_length=15, choices=TransmissionType.choices)
     fuel_type = models.CharField(max_length=10, choices=FuelType.choices)
     seats = models.PositiveIntegerField()
 
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
-
+    month_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    
     max_available_cars = models.PositiveIntegerField(default=0)
     is_unlimited = models.BooleanField(default=False)
 
@@ -90,10 +99,10 @@ class Car(TimestampedModel):
         return self.max_available_cars - booked_count
 
     def __str__(self):
-        return f"{self.car_make.name} {self.car_model.name} - {self.title if self.title else ''}"
+        return f"{self.car_make.name} {self.car_model.name} - {self.car_version if self.car_version else ''}"
 
-class CarImage(TimestampedModel):
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="images")
+class CarModelImage(TimestampedModel):
+    car_model = models.ForeignKey(CarModel, on_delete=models.CASCADE, related_name="car_model_images")
     image = models.ImageField(upload_to=upload_car_image)
     is_main = models.BooleanField(default=False)
 

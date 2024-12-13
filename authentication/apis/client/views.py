@@ -1,44 +1,18 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
-from authentication.serializers.user.user_register import ClientRegisterSerializer
-from authentication.serializers.user.user_update import ClientUpdateSerializer
+from authentication.serializers.client.client_update import ClientUpdateSerializer
+from authentication.serializers.client.client_complete import ClientCompletionSerializer
 from core.utils.logger import exception_log
-from core.utils.code_generator import generate_user_referral_code
 from core.models.user import User
-from core.models.referral_code import ReferralCode
+from core.permissions.is_not_blacklisted import IsNotBlacklisted
 
-class RegisterView(generics.CreateAPIView):
-    serializer_class = ClientRegisterSerializer
-    permission_classes = [permissions.AllowAny]
 
-    @transaction.atomic
-    def create(self, request, *args, **kwargs):
-        try:            
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = serializer.save() 
-            
-            try:
-                user_referral_code = generate_user_referral_code(user)
-                ReferralCode.objects.create(user=user, referral_code=user_referral_code, user_email=user.email)
-            except Exception as e:
-                exception_log(e,__file__)
-            
-            return Response({"info": "USER_CREATED_SUCCESSFULLY", "user": serializer.data}, status=status.HTTP_201_CREATED)
-        except ValidationError as e:
-            exception_log(e,__file__)
-            transaction.set_rollback(True)
-            return Response({"info": 'VALIDATION_ERROR', "details": e.detail}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            exception_log(e,__file__)
-            transaction.set_rollback(True)
-            return Response({"info": "UNEXPECTED_ERROR_OCCURRED", "details": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-class CompleteProfileView(generics.UpdateAPIView):
-    serializer_class = ClientUpdateSerializer
-    permission_classes = [permissions.AllowAny]
+class CompleteClientView(generics.UpdateAPIView):
+    serializer_class = ClientCompletionSerializer
+    permission_classes = [AllowAny]
 
     def get_object(self):
         email = self.request.data.get('email') 
@@ -48,10 +22,10 @@ class CompleteProfileView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         try:
             user = self.get_object()
-            if user.is_profile_complete:    
+            if user.is_complete:    
                 return Response({"info": "UNAUTHORIZED", "details": "This action cannot be performed."}, status=status.HTTP_401_UNAUTHORIZED)
             
-            user.is_profile_complete = True    
+            user.is_complete = True    
             user.is_active = True
 
             serializer = self.get_serializer(data=request.data, instance=user)
@@ -70,9 +44,9 @@ class CompleteProfileView(generics.UpdateAPIView):
             transaction.set_rollback(True)
             return Response({"info": "UNEXPECTED_ERROR_OCCURRED", "details": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateProfileView(generics.UpdateAPIView):
+class UpdateClientView(generics.UpdateAPIView):
     serializer_class = ClientUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotBlacklisted]
 
     def get_object(self):
         return self.request.user

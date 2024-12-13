@@ -1,22 +1,23 @@
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
-from core.models.car import CarImage
 from core.permissions.is_admin import IsAdminUserRole
-from automobile.serializers.car_model_image.create_or_update import CarImageCreateUpdateSerializer
-from automobile.serializers.car_model_image.delete import CarImageDeleteSerializer
+from core.permissions.is_not_blacklisted import IsNotBlacklisted
+from core.models.car import CarModelImage
+from automobile.serializers.car_model_image.create_or_update import CarModelImageCreateUpdateSerializer
+from automobile.serializers.car_model_image.delete import CarModelImageDeleteSerializer
 
-class CarImageViewSet(
+class CarModelImageViewSet(
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = CarImage.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminUserRole]
+    queryset = CarModelImage.objects.all()
+    permission_classes = [IsAuthenticated, IsNotBlacklisted, IsAdminUserRole]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
-            return CarImageCreateUpdateSerializer
+            return CarModelImageCreateUpdateSerializer
         if self.action == 'destroy':
-            return CarImageDeleteSerializer
+            return CarModelImageDeleteSerializer
         return super().get_serializer_class()

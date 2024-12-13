@@ -2,26 +2,26 @@ from django.db import transaction
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
-from core.models.car import Car
-from core.filters.car import CarFilter
+from core.models.car import Car, CarModel
+from core.filters.car import CarFilter, CarModelFilter
 from core.permissions.is_admin import IsAdminUserRole
+from core.permissions.is_not_blacklisted import IsNotBlacklisted
 from core.utils.pagination import CustomPagination  
 from core.utils.logger import exception_log
-from automobile.serializers.car.read import CarReadSerializer, CarListSerializer
+from automobile.serializers.car.read import CarReadSerializer, CarListSerializer, CarByModelListSerializer
 from automobile.serializers.car.create import CarCreateSerializer
 from automobile.serializers.car.update import CarUpdateSerializer
 from automobile.serializers.car.delete import CarDeleteSerializer
-
 class CarViewSet(viewsets.ModelViewSet):
     queryset = Car.objects.all()
     pagination_class = CustomPagination  
     filter_backends = [DjangoFilterBackend, OrderingFilter]  
     filterset_class = CarFilter  
-    # filterset_fields = ['car_make', 'car_type', 'fuel_type', 'transmission_type', 'seats']
     ordering_fields = ['price_per_day']  
     ordering = ['-created_at']  
     
@@ -38,10 +38,10 @@ class CarViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated()]
+            return [IsAuthenticated(), IsNotBlacklisted()]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), IsAdminUserRole()]
-        return [IsAuthenticated()] 
+            return [IsAuthenticated(), IsNotBlacklisted(), IsAdminUserRole()]
+        return [IsAuthenticated(), IsNotBlacklisted()] 
     
     def retrieve(self, request, *args, **kwargs):
         car = self.get_object()
@@ -66,3 +66,9 @@ class CarViewSet(viewsets.ModelViewSet):
             raise ValidationError("The car cannot be deleted as it has active or ongoing bookings.")
 
         instance.delete()
+
+class CarListByModelAPIView(ListAPIView):
+    queryset = CarModel.objects.prefetch_related('cars_of_model')
+    serializer_class = CarByModelListSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CarModelFilter

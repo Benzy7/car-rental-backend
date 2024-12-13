@@ -1,6 +1,6 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 
-class IsAdminUserRole(permissions.BasePermission):
+class IsAdminUserRole(BasePermission):
     
     def has_permission(self, request, view):
         return request.user.role == 'admin'

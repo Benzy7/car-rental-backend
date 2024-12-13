@@ -2,6 +2,7 @@ from django.db import models
 from core.models.base import TimestampedModel
 from core.models.user import User
 
+#TODO
 class Location(TimestampedModel):
     title = models.CharField(max_length=100)    
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
