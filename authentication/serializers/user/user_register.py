@@ -11,9 +11,9 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['first_name', 'last_name', 'email', 'password', 'referral_code']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
         }
-    
+
     def create(self, validated_data):
         referral_code = validated_data.pop('referral_code', None)
         validated_data['role'] = Role.CLIENT

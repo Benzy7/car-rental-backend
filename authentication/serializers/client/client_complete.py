@@ -12,7 +12,7 @@ class ClientCompletionSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'email', 'country', 'phone_country_code', 'phone_number', 'birthday'
+            'email', 'country', 'phone_country_code', 'phone_number', 'birthday',
             'gender', 'profile_picture', 'driver_licence_picture_1',  'driver_licence_picture_2', 
             'passport_picture',
         ]

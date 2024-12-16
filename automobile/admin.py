@@ -17,7 +17,7 @@ class CarAdmin(admin.ModelAdmin):
         'transmission_type',
         'fuel_type',
         'seats',
-        'is_best',
+        'is_popular',
         'is_top_pick',
         'is_top_rated',
         'is_recently_viewed',

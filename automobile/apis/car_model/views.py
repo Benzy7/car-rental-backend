@@ -18,7 +18,7 @@ class CarModelViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated(), IsNotBlacklisted()]
+            return []
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsNotBlacklisted(), IsAdminUserRole()]
         return [IsAuthenticated(), IsNotBlacklisted()] 

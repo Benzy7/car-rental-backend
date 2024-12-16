@@ -30,9 +30,9 @@ class ImportCarsView(APIView):
         with transaction.atomic():
             try:
                 for _, row in df.iterrows():
-                    fuel_mapping = {'P': 'Petrol', 'D': 'Diesel', 'E': 'Electric', 'H': 'Hybrid'}
-                    transmission_mapping = {'A': 'Automatic', 'M': 'Manual'}
-                    car_class_mapping = {'N': 'Normal', 'L': 'Luxe', 'S': 'Sport', 'U': 'Utility'}
+                    fuel_mapping = {'P': 'petrol', 'D': 'diesel', 'E': 'electric', 'H': 'hybrid'}
+                    transmission_mapping = {'A': 'automatic', 'M': 'manual'}
+                    car_class_mapping = {'N': 'normal', 'L': 'luxe', 'S': 'sport', 'U': 'utility'}
 
                     try:
                         fuel = fuel_mapping[row["Fuel"]]
@@ -57,8 +57,8 @@ class ImportCarsView(APIView):
                     car_version = row.get("Version", "")
                     car_version = car_version if car_version and not isinstance(car_version, float) or not math.isnan(car_version) else ""
                     car_type = row["Type"]
-                    if car_type not in ('SUV', 'Sedan', 'Van', 'Hatchback', 'Convertible'):
-                        raise ValueError("Invalid value for field: Type (Valid Types: SUV, Sedan, Van, Hatchback and Convertible).")
+                    if car_type not in ('suv', 'sedan', 'van', 'hatchback', 'convertible'):
+                        raise ValueError("Invalid value for field: Type (Valid Types: suv, sedan, van, hatchback and convertible).")
                     year = row.get('Year')
                     formatted_year = str(int(year) if year and not math.isnan(year) else '')                    
                     max_available_cars = int(row.get("Max") if row.get("Max") is not None and not math.isnan(row.get("Max")) else 1)

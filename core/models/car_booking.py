@@ -4,6 +4,7 @@ from .base import TimestampedModel
 from .user import User
 from .car import Car
 from .coupon import Coupon
+from .airport_transfer import Airport, TransferDestination
 
 class BookingStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
@@ -20,29 +21,33 @@ class BookingType(models.TextChoices):
 class CarBooking(TimestampedModel):
     car = models.ForeignKey(Car, on_delete=models.SET_NULL, related_name="bookings", null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    car_title = models.CharField(max_length=100)
+    car_description = models.CharField(max_length=100, blank=True)
     user_email = models.EmailField()
     
     booking_type = models.CharField(max_length=10, choices=BookingType.choices)
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)
     cancel_reason = models.CharField(max_length=255, blank=True)
-    cancelled_date = models.DateTimeField(null=True, blank=True)
-    confirmed_date = models.DateTimeField(null=True, blank=True)
+    cancelled_date = models.DateTimeField(null=True)
+    confirmed_date = models.DateTimeField(null=True)
     
     start_date = models.DateField()
     end_date = models.DateField()
-    pickup_date = models.DateField(null=True)
     pickup_time = models.TimeField(null=True)
-    return_date = models.DateField(null=True)
     return_time = models.TimeField(null=True)
     
+    flight_number = models.CharField(max_length=20, blank=True)
+    plane_arrival_datetime = models.DateTimeField(null=True)
+    airport = models.ForeignKey(Airport, on_delete=models.SET_NULL, null=True)
+    transfer_destination = models.ForeignKey(TransferDestination, on_delete=models.SET_NULL, null=True)
+    transfer_description  = models.CharField(max_length=255, blank=True)
+ 
     with_driver = models.BooleanField(default=False)
     driver_name = models.CharField(max_length=100, blank=True)
     driver_contact = models.CharField(max_length=20, blank=True)
     
-    with_pickup = models.BooleanField(default=False)       
-    pickup_location = models.CharField(max_length=200, blank=True)
-    return_location = models.CharField(max_length=200, blank=True)
+    with_delivery = models.BooleanField(default=False)       
+    car_pickup_location = models.CharField(max_length=200, blank=True)
+    car_return_location = models.CharField(max_length=200, blank=True)
     
     additional_notes = models.TextField(blank=True)
     
@@ -52,6 +57,7 @@ class CarBooking(TimestampedModel):
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     normal_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    transfer_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     driver_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     final_total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

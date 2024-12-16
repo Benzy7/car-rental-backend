@@ -15,6 +15,9 @@ class RegisterClientView(generics.CreateAPIView):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:            
+            if not request.data.get('agree_terms'):
+                return Response({"info": "TERMS_NOT_ACCEPTED", "details": "You must accept the terms and conditions to register."}, status=status.HTTP_400_BAD_REQUEST)
+
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = serializer.save() 

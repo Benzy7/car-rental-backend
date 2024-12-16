@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from core.models.car import CarModel
-from automobile.serializers.car_model_image.read import CarModelImageReadSerializer
+from automobile.serializers.car_images.read import CarModelImageReadSerializer
 
 class CarModelListSerializer(serializers.ModelSerializer):
     make = serializers.CharField(source='make.name', read_only=True)

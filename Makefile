@@ -1,36 +1,37 @@
 # Python environment
-PYTHON = python3
-PIP = pip3
+PYTHON = python
+PIP = pip
 VENV = ../env
+OSVENV = Scripts
 
 activate:
 	@echo "Activating virtual environment..."
-	. $(VENV)/bin/activate
+	. $(VENV)/$(OSVENV)/activate
 
 run:
 	@echo "Running Django development server..."
-	. $(VENV)/bin/activate && $(PYTHON) manage.py runserver --settings=skyCarManager.settings.dev
+	. $(VENV)/$(OSVENV)/activate && $(PYTHON) manage.py runserver --settings=skyCarManager.settings.dev
 
 test:
 	@echo "Running Django tests..."
-	. $(VENV)/bin/activate && $(PYTHON) manage.py test --settings=skyCarManager.settings.dev
+	. $(VENV)/$(OSVENV)/activate && $(PYTHON) manage.py test --settings=skyCarManager.settings.dev
 
 makemigrations:
 	@echo "Making migrations..."
-	. $(VENV)/bin/activate && $(PYTHON) manage.py makemigrations --settings=skyCarManager.settings.dev
+	. $(VENV)/$(OSVENV)/activate && $(PYTHON) manage.py makemigrations --settings=skyCarManager.settings.dev
 
 migrate:
 	@echo "Applying migrations..."
-	. $(VENV)/bin/activate && $(PYTHON) manage.py migrate --settings=skyCarManager.settings.dev
+	. $(VENV)/$(OSVENV)/activate && $(PYTHON) manage.py migrate --settings=skyCarManager.settings.dev
 
 mergemigrations:
 	@echo "Merging migrations..."
-	. $(VENV)/bin/activate && $(PYTHON) manage.py makemigrations --merge --settings=skyCarManager.settings.dev
+	. $(VENV)/$(OSVENV)/activate && $(PYTHON) manage.py makemigrations --merge --settings=skyCarManager.settings.dev
 
 freezereq:
 	@echo "Freezing requirements..."
-	. $(VENV)/bin/activate && pip list --format=freeze > requirements.txt
+	. $(VENV)/$(OSVENV)/activate && $(PIP) list --format=freeze > requirements.txt
 
 installreq:
 	@echo "Installing requirements..."
-	. $(VENV)/bin/activate && pip install -r requirements.txt
+	. $(VENV)/$(OSVENV)/activate && $(PIP) install -r requirements.txt

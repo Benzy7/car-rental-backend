@@ -8,7 +8,7 @@ from core.models.car import CarMake
 from core.utils.logger import exception_log
 from core.permissions.is_admin import IsAdminUserRole
 from core.permissions.is_not_blacklisted import IsNotBlacklisted
-from automobile.serializers.car_make.read import CarMakeReadSerializer, TopCarMakeReadSerializer
+from automobile.serializers.car_make.read import CarMakeReadSerializer, TopCarMakeReadSerializer, CarMakeLiteReadSerializer
 from automobile.serializers.car_make.update import CarMakeUpdateSerializer
 from automobile.serializers.car_make.create import CarMakeCreateSerializer
 
@@ -20,11 +20,13 @@ class CarMakeViewSet(viewsets.ModelViewSet):
             return CarMakeCreateSerializer
         elif self.action in ['update', 'partial_update']:
             return CarMakeUpdateSerializer
+        elif self.action == 'list':
+            return CarMakeLiteReadSerializer
         return CarMakeReadSerializer
     
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated(), IsNotBlacklisted()]
+            return []
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsNotBlacklisted(), IsAdminUserRole()]
         return [IsAuthenticated(), IsNotBlacklisted()] 
@@ -45,11 +47,11 @@ class CarMakeViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 class TopCarMakesAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsNotBlacklisted]
+    permission_classes = []
 
     def get(self, request):
         try:
-            top_makes = CarMake.objects.filter(is_top=True).only('name', 'logo')
+            top_makes = CarMake.objects.filter(is_top=True).only('id', 'name', 'logo')
             serializer = TopCarMakeReadSerializer(top_makes, many=True)
             return Response({"info": "TOP_CAR_MAKES_FETCHED_SUCCESSFULLY", "data": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:

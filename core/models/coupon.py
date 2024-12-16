@@ -8,10 +8,10 @@ class Coupon(TimestampedModel):
     class CouponType(models.TextChoices):
         DISCOUNT = 'discount', 'Discount'
         FIXED_DISCOUNT = 'fixed_discount', 'Fixed Discount'  
-        FREE_UPGRADE = 'free_upgrade', 'Free Upgrade'
-        FREE_DAY = 'free_day', 'Free Day'
-        WEEKEND_SPECIAL = 'weekend_special', 'Weekend Special'
-        EARLY_BIRD = 'early_bird', 'Early Bird'
+        # FREE_UPGRADE = 'free_upgrade', 'Free Upgrade'
+        # FREE_DAY = 'free_day', 'Free Day'
+        # WEEKEND_SPECIAL = 'weekend_special', 'Weekend Special'
+        # EARLY_BIRD = 'early_bird', 'Early Bird'
 
     coupon_code = models.CharField(max_length=8, unique=True)
     coupon_type = models.CharField(max_length=50, choices=CouponType.choices, default=CouponType.DISCOUNT)
@@ -32,7 +32,7 @@ class Coupon(TimestampedModel):
     def __str__(self):
         return f"{self.coupon_type} - {self.coupon_value}"
 
-class CouponRedemption(models.Model):
+class CouponRedemption(TimestampedModel):
     coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     redeemed_at = models.DateTimeField(auto_now_add=True)

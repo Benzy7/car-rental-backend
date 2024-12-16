@@ -17,6 +17,7 @@ from automobile.serializers.car.read import CarReadSerializer, CarListSerializer
 from automobile.serializers.car.create import CarCreateSerializer
 from automobile.serializers.car.update import CarUpdateSerializer
 from automobile.serializers.car.delete import CarDeleteSerializer
+
 class CarViewSet(viewsets.ModelViewSet):
     queryset = Car.objects.all()
     pagination_class = CustomPagination  
@@ -38,7 +39,7 @@ class CarViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated(), IsNotBlacklisted()]
+            return []
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsNotBlacklisted(), IsAdminUserRole()]
         return [IsAuthenticated(), IsNotBlacklisted()] 
@@ -69,6 +70,7 @@ class CarViewSet(viewsets.ModelViewSet):
 
 class CarListByModelAPIView(ListAPIView):
     queryset = CarModel.objects.prefetch_related('cars_of_model')
+    pagination_class = CustomPagination  
     serializer_class = CarByModelListSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = CarModelFilter

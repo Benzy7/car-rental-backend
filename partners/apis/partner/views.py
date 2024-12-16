@@ -88,6 +88,7 @@ class PartnerViewSet(viewsets.ModelViewSet):
         except Exception as e:
             exception_log(e,__file__)
         
+    #TODO
     @action(detail=True, methods=['post'], url_path='deactivate', permission_classes=[IsAuthenticated, IsNotBlacklisted, IsAdminUserRole])
     @transaction.atomic
     def deactivate(self, request, pk=None):

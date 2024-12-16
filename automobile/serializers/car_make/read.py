@@ -10,7 +10,7 @@ class CarMakeReadSerializer(serializers.ModelSerializer):
 class TopCarMakeReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarMake
-        fields = ['name', 'logo']
+        fields = ['id', 'name', 'logo']
         read_only_fields = fields
 
 class CarMakeLiteReadSerializer(serializers.ModelSerializer):

@@ -11,6 +11,6 @@ class CarUpdateSerializer(serializers.ModelSerializer):
             'car_make', 'car_model', 'car_type', 'car_class', 'title', 
             'sub_title', 'description', 'transmission_type', 'fuel_type', 
             'seats', 'price_per_day', 'is_unlimited', 'max_available_cars',
-            'is_best', 'is_top_pick', 'is_top_rated', 'is_recently_viewed', 
+            'is_popular', 'is_top_pick', 'is_top_rated', 'is_recently_viewed', 
             'has_exclusive_offer'
         ]

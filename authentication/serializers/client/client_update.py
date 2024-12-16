@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models.user import User, Gender
+from core.models.user import User
 from core.models.parameters import Parameters
 from PIL import Image
 from io import BytesIO

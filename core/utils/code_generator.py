@@ -35,10 +35,10 @@ def generate_referral_code(identifier, code_type='partner'):
     if code_type == 'partner':
         first_chars = ''.join(word[0].upper() for word in identifier.split()[:3])
     else:
-        first_chars = (identifier.first_name[:2].upper() + identifier.last_name[:2].upper())
+        first_chars = (identifier.first_name[:1].upper() + identifier.last_name[:1].upper())
     
     timestamp = str(int(time.time() * 1000))
-    random_salt = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+    random_salt = ''.join(random.choices(string.ascii_letters + string.digits, k=3))
    
     if code_type == 'partner':
         entropy_source = f"{identifier}-{timestamp}-{random_salt}"
@@ -48,12 +48,12 @@ def generate_referral_code(identifier, code_type='partner'):
     hash_object = hashlib.sha256(entropy_source.encode())
     unique_base64 = base64.urlsafe_b64encode(hash_object.digest()).decode()
     unique_chars = ''.join(
-        char for char in unique_base64[:3].upper()
+        char for char in unique_base64[:8-len(first_chars)]
         if char.isalnum()
     )
-   
+    
     referral_code = first_chars + unique_chars
-    return referral_code.upper()[:8]
+    return referral_code
 
 def generate_coupon_code(coupon_type, partner_name=None):
     type_prefixes = {
@@ -76,5 +76,5 @@ def generate_coupon_code(coupon_type, partner_name=None):
         char for char in unique_base64[:2].upper()
         if char.isalnum()
     )
-    coupon_code = (prefix + unique_chars)[:6].upper()
+    coupon_code = (prefix + unique_chars)[:6]
     return coupon_code
