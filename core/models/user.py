@@ -9,11 +9,8 @@ def upload_profile_picture(instance, filename):
 def upload_passport_picture(instance, filename):
     return f"{settings.FILES_FOLDER}/users/{instance.id}/passport/{filename}"
 
-def upload_driver_licence_1(instance, filename):
-    return f"{settings.FILES_FOLDER}/users/{instance.id}/driver_licence/1_{filename}"
-
-def upload_driver_licence_2(instance, filename):
-    return f"{settings.FILES_FOLDER}/users/{instance.id}/driver_licence/1_{filename}"
+def upload_driver_licence(instance, filename):
+    return f"{settings.FILES_FOLDER}/users/{instance.id}/driver_licence/{filename}"
 
 class Role(models.TextChoices):
     CLIENT = 'client', 'Client'
@@ -47,8 +44,7 @@ class User(AbstractUser, TimestampedModel):
     
     profile_picture = models.ImageField(upload_to=upload_profile_picture, null=True)
     passport_picture = models.ImageField(upload_to=upload_passport_picture, null=True)
-    driver_licence_picture_1 = models.ImageField(upload_to=upload_driver_licence_1, null=True)
-    driver_licence_picture_2 = models.ImageField(upload_to=upload_driver_licence_2, null=True)
+    driver_licence_picture = models.ImageField(upload_to=upload_driver_licence, null=True)
     
     is_complete = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)

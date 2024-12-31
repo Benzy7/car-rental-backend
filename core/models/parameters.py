@@ -15,6 +15,8 @@ class Parameters(TimestampedModel):
     short_duration_discount = models.DecimalField(max_digits=4, decimal_places=2, default=0.02)  # 2%
     
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, fields=None):
+        if fields:
+            return cls.objects.filter(id=1).only(*fields).first()
         instance, _created = cls.objects.get_or_create(id=1)
         return instance

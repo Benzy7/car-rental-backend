@@ -23,7 +23,7 @@ class ClientUpdateSerializer(serializers.ModelSerializer):
 
     def validate_profile_picture(self, value):
         if value is not None:
-            params = Parameters.get_instance()
+            params = Parameters.get_instance(fields=['profile_picture_size'])
             max_size = params.profile_picture_size * 1024 * 1024
             if value.size > max_size:
                 raise serializers.ValidationError(f"The image size should not exceed {params.profile_picture_size} MB.")

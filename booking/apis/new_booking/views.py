@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
+from core.utils.logger import exception_log
 from booking.serializers.booking.create import NewBookingSerializer
 from core.permissions.is_not_blacklisted import IsNotBlacklisted
-from core.models import CarBooking, Car, Coupon, CouponRedemption, User, Airport, TransferDestination, Parameters
-from core.utils.logger import exception_log
+from core.models import CarBooking, Car, Coupon, CouponRedemption, User, Airport, TransferDestination, Parameters, \
+    CarFeature, BookingFeature
 
 class NewBookingView(APIView):
     serializer_class = NewBookingSerializer
@@ -24,6 +25,7 @@ class NewBookingView(APIView):
             # Extract the data
             validated_data = serializer.validated_data
             car_id = validated_data.get('car_id')
+            feature_ids = validated_data.get('features', [])
             coupon_code = validated_data.get('coupon_id', '')
             user_id = validated_data.get('user_id')
             start_date = validated_data.get('start_date')
@@ -33,6 +35,8 @@ class NewBookingView(APIView):
             booking_type = validated_data.get('booking_type')
             with_driver = validated_data.get('with_driver', False)
             additional_notes = validated_data.get('additional_notes', '')
+            phone_number_1 = validated_data.get('phone_number_1', '')
+            phone_number_2 = validated_data.get('phone_number_2', '')
             flight_number = validated_data.get('flight_number', '')
             plane_arrival_datetime = validated_data.get('plane_arrival_datetime', None)
             airport_id = validated_data.get('airport_id', None)
@@ -73,15 +77,16 @@ class NewBookingView(APIView):
                     transfer_destination = TransferDestination.objects.filter(id=transfer_destination, airport=airport).only('city', 'price')
                     
             # 1. Validate Car
-            try:
-                #TODO: check car availblity
-                user = User.objects.get(pk=user_id).only('id', 'email')
-                car = Car.objects.get(pk=car_id).only('id', 'price_per_day', 'price_per_month', 'car_make__name', 'car_model__name', 'car_version')
-            except Car.DoesNotExist:
-                return Response({"info": "CAR_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
-            except User.DoesNotExist:
+            user = User.objects.filter(pk=user_id).only('id', 'email').first()
+            if not user:
                 return Response({"info": "USER_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
-
+            #TODO: check car availblity
+            car = Car.objects.filter(pk=car_id).only(
+                'id', 'price_per_day', 'price_per_month', 'car_make__name', 'car_model__name', 'car_version'
+            ).first()
+            if not car:
+                return Response({"info": "CAR_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+                
             # 2. Validate Coupon
             #TODO: add other types
             coupon = None
@@ -97,11 +102,29 @@ class NewBookingView(APIView):
                 except Coupon.DoesNotExist:
                     return Response({"info": "COUPON_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
 
+            # Features calculation
+            features_fee = 0.0
+            if feature_ids:
+                features = CarFeature.objects.filter(id__in=feature_ids).only('name', 'price', 'is_active')
+                if len(features) != len(feature_ids):
+                    return Response({
+                        "info": "FEATURE_NOT_FOUND", 
+                        "details": "One or more feature were not found."
+                        }, status=status.HTTP_404_NOT_FOUND)
+                for feature in features:
+                    if not feature.is_active:
+                        return Response({
+                            "info": "FEATURE_UNAVAILABLE", 
+                            "details": f"{feature.name} is currently unavailable."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    BookingFeature.objects.create(booking=booking, feature=feature, price=feature.price)
+                    features_fee += feature.price
+
             # Base price calculation
-            params = Parameters.get_instance().only(
-                'driver_price_perday', 'long_duration_discount', 'medium_duration_discount', 'short_duration_discount'
+            base_price = (float(car.price_per_day)  * nb_booking_days) + features_fee
+            params = Parameters.get_instance(
+                fields=['driver_price_perday', 'long_duration_discount', 'medium_duration_discount', 'short_duration_discount']
             )
-            base_price = float(car.price_per_day)  * nb_booking_days
             transfer_fee = 0.0
             driver_fee = 0.0
             if booking_type == "transfer": 
@@ -111,6 +134,7 @@ class NewBookingView(APIView):
                 driver_fee = float(params.driver_price_perday) * nb_booking_days
                 base_price += driver_fee
             
+
             # Standard discount calculation
             # discount = 0.0
             # monthly_price = None
@@ -156,14 +180,17 @@ class NewBookingView(APIView):
             booking['return_time'] = return_time
             booking['with_driver'] = with_driver
             booking['additional_notes'] = additional_notes
+            booking['phone_number_1'] = phone_number_1
+            booking['phone_number_2'] = phone_number_2
             booking['flight_number'] = flight_number
             booking['plane_arrival_datetime'] = plane_arrival_datetime
             booking['airport'] = airport
             booking['transfer_destination'] = transfer_destination
-            booking['transfer_description'] =  f"{airport.name} -> {transfer_destination.city}"
+            booking['transfer_description'] =  f"{airport.name if airport else 'airport'} -> {transfer_destination.city if transfer_destination else 'destination'}" if booking_type == "transfer" else ""
             booking['coupon'] = coupon
             booking['coupon_code'] = coupon_code
             booking['driver_fee'] = driver_fee     
+            booking['features_fee'] = features_fee     
             booking['transfer_fee'] = transfer_fee                   
             booking['normal_discount'] = normal_discount
             booking['coupon_discount'] = coupon_discount

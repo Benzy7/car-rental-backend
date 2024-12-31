@@ -1,5 +1,6 @@
 from django.contrib import admin
-from core.models.car import Car, CarModelImage, CarMake, CarModel
+from core.models.car import Car, CarMake, CarModel
+from core.models.car_feature import CarFeature
 
 @admin.register(Car)
 class CarAdmin(admin.ModelAdmin):
@@ -57,3 +58,10 @@ class CarModelAdmin(admin.ModelAdmin):
 
     list_filter = ('make',)
     list_per_page = 20 
+
+@admin.register(CarFeature)
+class CarFeatureAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in CarFeature._meta.get_fields() if not field.many_to_many and not field.one_to_many]    
+    search_fields = ['name']
+    ordering = ['created_at']
+    list_display_links = ('id',)

@@ -7,7 +7,7 @@ environ.Env.read_env()
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["skycars.ovh", "www.skycars.ovh", "dev.skycars.ovh"]
+ALLOWED_HOSTS = ["skycars.ovh", "www.skycars.ovh", "dev.skycars.ovh", env('SERVER_IP')]
 CORS_ALLOWED_ORIGINS = [
     "http://www.skycars.ovh",
     "https://www.skycars.ovh",

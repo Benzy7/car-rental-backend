@@ -13,12 +13,10 @@ class ClientCompletionSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'email', 'country', 'phone_country_code', 'phone_number', 'birthday',
-            'gender', 'profile_picture', 'driver_licence_picture_1',  'driver_licence_picture_2', 
-            'passport_picture',
+            'gender', 'profile_picture', 'driver_licence_picture', 'passport_picture',
         ]
         extra_kwargs = {
             'email': {'required': True},
-            'passport_picture': {'required': True},
             'phone_country_code': {'required': True},
             'phone_number': {'required': True},
             'country':  {'required': True},
@@ -26,7 +24,7 @@ class ClientCompletionSerializer(serializers.ModelSerializer):
 
     def validate_profile_picture(self, value):
         if value is not None:
-            params = Parameters.get_instance()
+            params = Parameters.get_instance(fields=['profile_picture_size'])
             max_size = params.profile_picture_size * 1024 * 1024
             if value.size > max_size:
                 raise serializers.ValidationError(f"The image size should not exceed {params.profile_picture_size} MB.")

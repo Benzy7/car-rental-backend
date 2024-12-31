@@ -27,8 +27,8 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
             if referral:
                 ReferralCodeUsage.objects.create(referral_code=referral, used_by=user, used_by_email=user.email)
                 
-                params = Parameters.get_instance()
-                
+                params = Parameters.get_instance(fields=['referral_coupon_type', 'referral_coupon_expiration_in_days', 'referral_coupon_value'])
+
                 coupon_code = generate_coupon_code(params.referral_coupon_type, partner_name=referral.partner.name if referral.partner else "")
                 expiration_date = timezone.now() + timezone.timedelta(days=params.referral_coupon_expiration_in_days)
                 

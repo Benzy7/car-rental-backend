@@ -1,7 +1,8 @@
 from django.db import transaction
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -74,3 +75,27 @@ class CarListByModelAPIView(ListAPIView):
     serializer_class = CarByModelListSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = CarModelFilter
+
+class ExploreCarsAPIView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        try:
+            luxe_cars = Car.objects.filter(car_class='luxe')[:3]
+            top_cars = Car.objects.filter(is_top_pick=True).exclude(car_class='luxe')[:5]
+            popular_cars = Car.objects.filter(is_popular=True).exclude(car_class='luxe')[:10]
+
+            luxe_cars_serializer = CarListSerializer(luxe_cars, many=True)
+            top_cars_serializer = CarListSerializer(top_cars, many=True)
+            popular_cars_serializer = CarListSerializer(popular_cars, many=True)
+            
+            response_data = {
+                "luxe_cars": luxe_cars_serializer.data,
+                "top_cars": top_cars_serializer.data,
+                "popular_cars": popular_cars_serializer.data,
+            }
+            
+            return Response({"info": "EXPLORE_CARS_FETCHED_SUCCESSFULLY", "data": response_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            exception_log(e,__file__)
+            return Response({"info": "UNEXPECTED_ERROR_OCCURRED", "details": str(e)}, status=status.HTTP_400_BAD_REQUEST)

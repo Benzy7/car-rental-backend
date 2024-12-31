@@ -29,7 +29,7 @@ class LoginView(generics.GenericAPIView):
             if user_check.is_blacklisted:
                 return Response({
                     "info": "BLACKLISTED_ACCOUNT", 
-                    "detail": "Your account has been blacklisted. Please contact support for more information."
+                    "details": "Your account has been blacklisted. Please contact support for more information."
                 }, status=status.HTTP_403_FORBIDDEN)
                 
             if not user_check.is_complete:
@@ -78,7 +78,7 @@ class TokenRefreshView(generics.GenericAPIView):
             if user.is_blacklisted:
                 return Response({
                     "info": "BLACKLISTED_ACCOUNT", 
-                    "detail": "Your account has been blacklisted and you cannot access this service. Please contact support for further details."
+                    "details": "Your account has been blacklisted and you cannot access this service. Please contact support for further details."
                 }, status=status.HTTP_403_FORBIDDEN)
             
             new_refresh_token = RefreshToken.for_user(user)

@@ -49,6 +49,8 @@ class CarBooking(TimestampedModel):
     car_pickup_location = models.CharField(max_length=200, blank=True)
     car_return_location = models.CharField(max_length=200, blank=True)
     
+    phone_number_1 = models.CharField(max_length=15, blank=True)
+    phone_number_2 = models.CharField(max_length=15, blank=True)
     additional_notes = models.TextField(blank=True)
     
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True)
@@ -57,6 +59,7 @@ class CarBooking(TimestampedModel):
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     normal_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    features_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     transfer_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     driver_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -70,4 +73,4 @@ class CarBooking(TimestampedModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Booking for {self.car.car_model.name} by {self.user.email} from {self.start_date} to {self.end_date}"
+        return f"Booking for {self.car.car_model.name if self.car else self.car_description} by {self.user_email} from {self.start_date} to {self.end_date}"
