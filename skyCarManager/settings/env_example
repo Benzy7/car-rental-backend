@@ -1,3 +1,5 @@
+DJANGO_ENV=xxxxxxxx  
+
 SECRET_KEY=xxxxxxxx
 
 DB_NAME=xxxxxxxx

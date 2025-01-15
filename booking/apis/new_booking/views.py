@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
+from core.utils.booking import is_car_available
 from core.utils.logger import exception_log
 from booking.serializers.booking.create import NewBookingSerializer
 from core.permissions.is_not_blacklisted import IsNotBlacklisted
@@ -44,23 +44,33 @@ class NewBookingView(APIView):
 
             if start_date < timezone.now().date():
                 return Response({"info": "START_DATE_ERROR", "details": "Start date must be in the future."}, status=status.HTTP_400_BAD_REQUEST)
-
             if end_date <= start_date:
                 return Response({"info": "END_DATE_ERROR", "details": "End date must be after the start date."}, status=status.HTTP_400_BAD_REQUEST)
 
-            if booking_type not in ('standard', 'event', 'transfer',):
+            if booking_type not in ('standard', 'event', 'transfer', 'utility'):
                 return Response({"info": "INVALID_BOOKING_TYPE"}, status=status.HTTP_400_BAD_REQUEST)
 
             nb_booking_days = (end_date - start_date).days
-            if booking_type == "standard" and nb_booking_days < 3:
+            #TODO: add to params
+            if nb_booking_days > 184:
                 return Response({
-                    "info": "BOOKING_LENGTH_ERROR", 
+                    "info": "BOOKING_LENGTH_EXCEEDED", 
+                    "details": "Bookings must not exceed 184 days."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif booking_type == "standard" and nb_booking_days < 3:
+                return Response({
+                    "info": "STANDARD_BOOKING_LENGTH_ERROR", 
                     "details": "Standard bookings must be for at least 3 days."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif booking_type == "utility" and nb_booking_days < 28:
+                return Response({
+                    "info": "UTILITY_BOOKING_LENGTH_ERROR", 
+                    "details": "Utility bookings must be at least 28 days."
                 }, status=status.HTTP_400_BAD_REQUEST)
             elif (booking_type == "event" or booking_type == "transfer") and nb_booking_days != 1:
                 return Response({
-                    "info": "BOOKING_LENGTH_ERROR", 
-                    "details": "Tranfer and Event bookings must be for one day only."
+                    "info": "TE_BOOKING_LENGTH_ERROR", 
+                    "details": "Transfer and Event bookings must be for one day only."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             airport = None
@@ -80,13 +90,28 @@ class NewBookingView(APIView):
             user = User.objects.filter(pk=user_id).only('id', 'email').first()
             if not user:
                 return Response({"info": "USER_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
-            #TODO: check car availblity
             car = Car.objects.filter(pk=car_id).only(
-                'id', 'price_per_day', 'price_per_month', 'car_make__name', 'car_model__name', 'car_version'
+                'id', 'price_per_day', 'price_per_month', 'car_make__name', 'car_model__name', 'car_variant', 'car_class'
             ).first()
             if not car:
                 return Response({"info": "CAR_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
-                
+            if booking_type == "event" and car.car_class != "luxury":
+                return Response({
+                    "info": "EVENT_BOOKING_CAR_CLASS_ERROR", 
+                    "details": "Event bookings can only be made with luxury cars."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif booking_type == "utility" and car.car_class != "utility":
+                return Response({
+                    "info": "UTILITY_BOOKING_CAR_CLASS_ERROR", 
+                    "details": "Utility bookings can only be made with utility cars."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            if not is_car_available(car, start_date, end_date, 1):
+                return Response({
+                    "info": "CAR_UNAVAILABLE_ERROR", 
+                    "details": "Car unavailable for the selected dates."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
             # 2. Validate Coupon
             #TODO: add other types
             coupon = None
@@ -105,7 +130,7 @@ class NewBookingView(APIView):
             # Features calculation
             features_fee = 0.0
             if feature_ids:
-                features = CarFeature.objects.filter(id__in=feature_ids).only('name', 'price', 'is_active')
+                features = CarFeature.objects.filter(id__in=feature_ids).only('code', 'price', 'is_active')
                 if len(features) != len(feature_ids):
                     return Response({
                         "info": "FEATURE_NOT_FOUND", 
@@ -115,7 +140,7 @@ class NewBookingView(APIView):
                     if not feature.is_active:
                         return Response({
                             "info": "FEATURE_UNAVAILABLE", 
-                            "details": f"{feature.name} is currently unavailable."
+                            "details": f"{feature.code} is currently unavailable."
                         }, status=status.HTTP_400_BAD_REQUEST)
                     BookingFeature.objects.create(booking=booking, feature=feature, price=feature.price)
                     features_fee += feature.price
@@ -133,26 +158,15 @@ class NewBookingView(APIView):
             if with_driver:
                 driver_fee = float(params.driver_price_perday) * nb_booking_days
                 base_price += driver_fee
-            
 
             # Standard discount calculation
-            # discount = 0.0
-            # monthly_price = None
-            if nb_booking_days >= 30:
-                # if car.price_per_month:
-                #     nb_months = nb_booking_days // 30
-                #     remaining_days = nb_booking_days % 30
-                #     monthly_price = float(car.price_per_month) * nb_months + float(car.price_per_day) * remaining_days
-                # else:
+            if nb_booking_days >= 28:
                 discount = float(params.long_duration_discount)
             elif nb_booking_days >= 14:
                 discount = float(params.medium_duration_discount)
             elif nb_booking_days >= 7:
                 discount = float(params.short_duration_discount)
             
-            # if monthly_price and (base_price > monthly_price):
-            #     normal_discount = base_price - monthly_price
-            # else:
             normal_discount = base_price * discount
             
             # Coupon discount calculation
@@ -170,12 +184,13 @@ class NewBookingView(APIView):
             booking = {}
             booking['car'] = car
             booking['user'] = user
-            booking['car_description'] = f"{car.car_make.name} {car.car_model.name} {car.car_version}"
+            booking['car_description'] = f"{car.car_make.name} {car.car_model.name} {car.car_variant}"
             booking['user_email'] = user.email
             booking['booking_type'] = booking_type
             booking['status'] = "pending"
             booking['start_date'] = start_date
             booking['end_date'] = end_date
+            booking['original_end_date'] = end_date
             booking['pickup_time'] = pickup_time
             booking['return_time'] = return_time
             booking['with_driver'] = with_driver

@@ -11,4 +11,5 @@ class PartnerAdmin(admin.ModelAdmin):
     list_filter = (
         'is_active',
         'partner_type',
+        'country'
     )  

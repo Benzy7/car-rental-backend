@@ -1,4 +1,4 @@
-from .base import TimestampedModel
+from .base import TimestampedModel, COUNTRY_CHOICES
 from django.db import models
 from django.utils.text import slugify
 from core.models.user import User
@@ -17,7 +17,8 @@ class Partner(TimestampedModel):
     phone_number = models.CharField(max_length=20)
     is_active = models.BooleanField(default=True)
     manager = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    
+    country = models.CharField(max_length=100, choices=COUNTRY_CHOICES, blank=True)  
+
     def save(self, *args, **kwargs):
         if not self.pk:
             self.slug = slugify(self.name)

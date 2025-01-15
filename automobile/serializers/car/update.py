@@ -8,9 +8,8 @@ class CarUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
         fields = [
-            'car_make', 'car_model', 'car_type', 'car_class', 'title', 
-            'sub_title', 'description', 'transmission_type', 'fuel_type', 
-            'seats', 'price_per_day', 'is_unlimited', 'max_available_cars',
-            'is_popular', 'is_top_pick', 'is_top_rated', 'is_recently_viewed', 
-            'has_exclusive_offer'
+            'car_make', 'car_model', 'car_type', 'car_class', 'car_variant', 
+            'transmission_type', 'fuel_type', 'seats', 'price_per_day', 'is_active', 
+            'max_available_cars','is_popular', 'is_top_pick', 'is_top_rated', 
+            'is_recently_viewed', 'has_exclusive_offer'
         ]

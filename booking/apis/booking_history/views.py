@@ -20,11 +20,11 @@ class UserBookingsHistoryView(APIView):
 
             bookings = []
             if status_filter == 'upcoming':
-                bookings = CarBooking.objects.filter(user=user, status__in=['pending', 'confirmed']).prefetch_related('car', 'airport', 'transfer_destination')
+                bookings = CarBooking.objects.filter(user=user, status__in=['pending', 'confirmed']).select_related('car', 'airport', 'transfer_destination')
             elif status_filter == 'completed':
-                bookings = CarBooking.objects.filter(user=user, status='completed').prefetch_related('car', 'airport', 'transfer_destination')
+                bookings = CarBooking.objects.filter(user=user, status='completed').select_related('car', 'airport', 'transfer_destination')
             elif status_filter == 'cancelled':
-                bookings = CarBooking.objects.filter(user=user, status='cancelled').prefetch_related('car', 'airport', 'transfer_destination')
+                bookings = CarBooking.objects.filter(user=user, status='cancelled').select_related('car', 'airport', 'transfer_destination')
                 
             serializer = UserBookingHistorySerializer(bookings, many=True)
             return Response({"info": "BOOKINGS_FETCHED_SUCCESSFULLY", "data": serializer.data}, status=status.HTTP_200_OK)

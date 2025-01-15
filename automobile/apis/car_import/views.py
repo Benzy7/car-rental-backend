@@ -53,9 +53,8 @@ class ImportCarsView(APIView):
                     if created:
                         created_objects["models"] += 1
 
-                    is_unlimited = row.get("Unlimited") == 1
-                    car_version = row.get("Version", "")
-                    car_version = car_version if car_version and not isinstance(car_version, float) or not math.isnan(car_version) else ""
+                    car_variant = row.get("Variant", "")
+                    car_variant = car_variant if car_variant and not isinstance(car_variant, float) or not math.isnan(car_variant) else ""
                     car_type = row["Type"]
                     if car_type not in ('suv', 'sedan', 'van', 'hatchback', 'convertible'):
                         raise ValueError("Invalid value for field: Type (Valid Types: suv, sedan, van, hatchback and convertible).")
@@ -69,14 +68,13 @@ class ImportCarsView(APIView):
                         car_model=model,
                         car_type=car_type,
                         car_class=car_class,
-                        car_version=car_version,
+                        car_variant=car_variant,
                         transmission_type=transmission,
                         fuel_type=fuel,
                         seats=row["Seats"],
                         price_per_day=row["Price"],
                         partner_id=row.get("Agence"),
                         max_available_cars=max_available_cars,
-                        is_unlimited=is_unlimited,
                         year=formatted_year
                     )
                     created_objects["cars"] += 1

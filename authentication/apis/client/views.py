@@ -23,7 +23,7 @@ class CompleteClientView(generics.UpdateAPIView):
         try:
             user = self.get_object()
             if user.is_complete:    
-                return Response({"info": "UNAUTHORIZED", "details": "This action cannot be performed."}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"detail": "You do not have permission to access this resource."}, status=status.HTTP_403_FORBIDDEN)
             
             user.is_complete = True    
             user.is_active = True
@@ -59,7 +59,7 @@ class UpdateClientView(generics.UpdateAPIView):
 
             req_email = serializer.validated_data.get('email')
             if req_email and req_email != user.email:
-                return Response({"info": "UNAUTHORIZED", "details": "This action cannot be performed."}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"detail": "You do not have permission to access this resource."}, status=status.HTTP_403_FORBIDDEN)
 
             serializer.save()
                    

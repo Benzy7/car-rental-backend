@@ -9,6 +9,8 @@ from authentication.serializers.user.user_login import UserLoginSerializer
 from authentication.serializers.user.user_refresh import UserRefreshTokenSerializer
 from core.utils.logger import exception_log
 from core.models.user import User
+from core.models.referral_code import ReferralCode
+from authentication.serializers.user.user_profile import UserProfileSerializer
 
 class LoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
@@ -47,9 +49,17 @@ class LoginView(generics.GenericAPIView):
             user.last_login = timezone.now()
             user.save(update_fields=['last_login']) 
             
+            user_serializer = UserProfileSerializer(user)
+            referral_code_value = None
+            referral_code = ReferralCode.objects.filter(user=user).first()
+            if referral_code:
+                referral_code_value = referral_code.referral_code
+
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'user': user_serializer.data,
+                'referral_code': referral_code_value,
                 'info': 'LOGIN_SUCCESS'
             }, status=status.HTTP_200_OK)
         except ValidationError as e:

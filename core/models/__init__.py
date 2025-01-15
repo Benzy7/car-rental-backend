@@ -9,3 +9,4 @@ from .partner import Partner
 from .coupon import Coupon, CouponRedemption
 from .parameters import Parameters
 from .airport_transfer import  Airport, TransferDestination
+from .favorite_car import FavoriteCar

@@ -13,8 +13,17 @@ class BookingStatus(models.TextChoices):
     COMPLETED = 'completed', 'Completed'
     CANCELLED = 'cancelled', 'Cancelled'
 
+class ExtensionStatus(models.TextChoices):
+    NOT_REQUESTED = 'not_requested', 'Not Requested'
+    PENDING = 'pending', 'Pending'
+    ACCEPTED = 'accepted', 'Accepted'
+    REJECTED = 'rejected', 'Rejected'
+    CANCELLED = 'cancelled', 'Cancelled' #TODO
+    EXPIRED = 'expired', 'Expired' #TODO
+
 class BookingType(models.TextChoices):
     STANDARD = 'standard', 'Standard'
+    UTILITY = 'utility', 'Utility'
     EVENT = 'event', 'Event'
     TRANSFER = 'transfer', 'Transfer'
 
@@ -26,12 +35,16 @@ class CarBooking(TimestampedModel):
     
     booking_type = models.CharField(max_length=10, choices=BookingType.choices)
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)
+    extension_status = models.CharField(max_length=20, choices=BookingStatus.choices, default=ExtensionStatus.NOT_REQUESTED)
     cancel_reason = models.CharField(max_length=255, blank=True)
     cancelled_date = models.DateTimeField(null=True)
     confirmed_date = models.DateTimeField(null=True)
     
     start_date = models.DateField()
     end_date = models.DateField()
+    original_end_date = models.DateField(null=True)
+    extension_end_date = models.DateField(null=True)
+
     pickup_time = models.TimeField(null=True)
     return_time = models.TimeField(null=True)
     
@@ -63,6 +76,7 @@ class CarBooking(TimestampedModel):
     transfer_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     driver_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    extension_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     final_total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     qr_code = models.SlugField(unique=True)

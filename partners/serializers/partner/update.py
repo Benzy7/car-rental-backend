@@ -6,4 +6,4 @@ class PartnerUpdateSerializer(serializers.ModelSerializer):
         model = Partner
         fields = ['name', 'description', 'email', 'phone_number']
 
-#TODO: partner type and maneger can be chanegd only with admin (actions)
+#TODO: partner country, type and maneger can be chanegd only with admin (actions)

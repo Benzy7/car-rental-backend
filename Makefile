@@ -1,8 +1,8 @@
 # Python environment
-PYTHON = python
-PIP = pip
-VENV = ../env
-OSVENV = Scripts
+PYTHON = python3
+PIP = pip3
+VENV = ../venv
+OSVENV = bin
 
 activate:
 	@echo "Activating virtual environment..."

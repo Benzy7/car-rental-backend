@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -35,21 +35,22 @@ class PartnerViewSet(viewsets.ModelViewSet):
         return PartnerReadSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'create', 'destroy']:
+        print(self.action)
+        if self.action in ['list', 'create', 'destroy', 'get_lite_partners']:
             return [IsAuthenticated(), IsNotBlacklisted(), IsAdminUserRole()]
         elif self.action in ['retrieve', 'update', 'partial_update']:
             return [IsAuthenticated(), IsNotBlacklisted(), IsAdminOrOwner()]
         return []
 
     def finalize_response(self, request, response, *args, **kwargs):
-        if not isinstance(response.data, dict):
+        if not isinstance(response.data, (dict, list)):
             response.data = {
                 "info": "UNEXPECTED_ERROR_OCCURRED",
                 "errors": str(response.data)
             }
             return super().finalize_response(request, response, *args, **kwargs)
         
-        if isinstance(response.data, dict) and 'info' in response.data:
+        if isinstance(response.data, (dict, list)) and 'info' in response.data:
             return super().finalize_response(request, response, *args, **kwargs)
         
         if response.status_code < 300:
@@ -87,48 +88,53 @@ class PartnerViewSet(viewsets.ModelViewSet):
             ReferralCode.objects.create(partner=partner, referral_code=partner_referral_code, partner_name=partner.name)
         except Exception as e:
             exception_log(e,__file__)
-        
+       
+    @action(detail=False, methods=['get'], url_path='lite')
+    def get_lite_partners(self, request):
+        partners = Partner.objects.all().values('id', 'name', 'partner_type')
+        return Response({"info": "PARTNERS_LITE_LISTED_SUCCESSFULLY", "data": partners}, status=status.HTTP_200_OK)
+
     #TODO
-    @action(detail=True, methods=['post'], url_path='deactivate', permission_classes=[IsAuthenticated, IsNotBlacklisted, IsAdminUserRole])
-    @transaction.atomic
-    def deactivate(self, request, pk=None):
-        """Deactivate a partner"""
-        partner = self.get_object()
-        partner.is_active = False
-        partner.save(update_fields=['is_active'])
+    # @action(detail=True, methods=['post'], url_path='deactivate')
+    # @transaction.atomic
+    # def deactivate(self, request, pk=None):
+    #     """Deactivate a partner"""
+    #     partner = self.get_object()
+    #     partner.is_active = False
+    #     partner.save(update_fields=['is_active'])
         
-        return Response({"info": "PARTNER_DEACTIVATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
+    #     return Response({"info": "PARTNER_DEACTIVATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='activate', permission_classes=[IsAuthenticated, IsNotBlacklisted, IsAdminUserRole])
-    @transaction.atomic
-    def activate(self, request, pk=None):
-        """Activate a partner"""
-        partner = self.get_object()
-        partner.is_active = True
-        partner.save(update_fields=['is_active'])
-        return Response({"info": "PARTNER_ACTIVATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
+    # @action(detail=True, methods=['post'], url_path='activate')
+    # @transaction.atomic
+    # def activate(self, request, pk=None):
+    #     """Activate a partner"""
+    #     partner = self.get_object()
+    #     partner.is_active = True
+    #     partner.save(update_fields=['is_active'])
+    #     return Response({"info": "PARTNER_ACTIVATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='change-type', permission_classes=[IsAuthenticated, IsNotBlacklisted, IsAdminUserRole])
-    @transaction.atomic
-    def change_type(self, request, pk=None):
-        """Change the partner type"""
-        partner = self.get_object()
-        partner_type = request.data.get('partner_type')
+    # @action(detail=True, methods=['post'], url_path='change-type')
+    # @transaction.atomic
+    # def change_type(self, request, pk=None):
+    #     """Change the partner type"""
+    #     partner = self.get_object()
+    #     partner_type = request.data.get('partner_type')
 
-        if partner_type not in Partner.PartnerType.values:
-            return Response({"info": "INVALID_PARTNER_TYPE"}, status=status.HTTP_400_BAD_REQUEST)
+    #     if partner_type not in Partner.PartnerType.values:
+    #         return Response({"info": "INVALID_PARTNER_TYPE"}, status=status.HTTP_400_BAD_REQUEST)
 
-        partner.partner_type = partner_type
-        partner.save(update_fields=['partner_type'])
-        return Response({"info": "PARTNER_TYPE_UPDATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
+    #     partner.partner_type = partner_type
+    #     partner.save(update_fields=['partner_type'])
+    #     return Response({"info": "PARTNER_TYPE_UPDATED_SUCCESSFULLY"}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='regenerate-referral', permission_classes=[IsAuthenticated, IsNotBlacklisted, IsAdminOrOwner])
-    @transaction.atomic
-    def regenerate_referral(self, request, pk=None):
-        """Regenerate referral code for a partner"""
-        partner = self.get_object()
-        ReferralCode.objects.filter(partner=partner).update(is_active=False)
-        partner_referral_code = generate_referral_code(partner.name)
-        ReferralCode.objects.create(partner=partner, referral_code=partner_referral_code, partner_name=partner.name)
+    # @action(detail=True, methods=['post'], url_path='regenerate-referral')
+    # @transaction.atomic
+    # def regenerate_referral(self, request, pk=None):
+    #     """Regenerate referral code for a partner"""
+    #     partner = self.get_object()
+    #     ReferralCode.objects.filter(partner=partner).update(is_active=False)
+    #     partner_referral_code = generate_referral_code(partner.name)
+    #     ReferralCode.objects.create(partner=partner, referral_code=partner_referral_code, partner_name=partner.name)
         
-        return Response({"info": "REFERRAL_CODE_REGENERATED_SUCCESSFULLY", "new_referral_code": new_referral_code}, status=status.HTTP_200_OK)
+    #     return Response({"info": "REFERRAL_CODE_REGENERATED_SUCCESSFULLY", "new_referral_code": new_referral_code}, status=status.HTTP_200_OK)

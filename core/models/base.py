@@ -6,3 +6,9 @@ class TimestampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+COUNTRY_CHOICES = [
+    ('TN', 'Tunisia'),
+    ('TR', 'Türkiye'),
+    ('MY', 'Malaysia'),
+]

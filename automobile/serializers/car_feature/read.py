@@ -5,18 +5,18 @@ class CarFeatureListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CarFeature
-        fields = ['id', 'name', 'price', 'is_active']
+        fields = ['id', 'code', 'price', 'is_active']
         read_only_fields = fields
 
 class CarFeatureRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CarFeature
-        fields = ['id', 'name', 'description', 'price', 'is_active']
+        fields = ['id', 'code', 'description', 'price', 'is_active']
         read_only_fields = fields
 
 class BookCarFeatureReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarFeature
-        fields = ['id', 'name', 'price']
+        fields = ['id', 'code', 'price']
         read_only_fields = fields
