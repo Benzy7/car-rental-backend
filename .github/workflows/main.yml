@@ -9,72 +9,62 @@ jobs:
   version:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # Allow pushing tags
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Set up Git config
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
 
       - name: Get latest version
         id: version
         run: |
-          # Check for the latest tag and default to v0.0.0 if no tag is found
-          VERSION=$(git tag -l | sort -V | tail -n 1 || echo "v0.0.0")
-          VERSION=$(echo $VERSION)
-          echo "VERSION: $VERSION"
-          
-          # Remove 'v' prefix for version comparison and splitting
-          VERSION_NO_V=${VERSION#v}
-          echo "VERSION_NO_V: $VERSION_NO_V"
-          
-          # If no tags exist (first run), create the initial v0.0.0 tag
+          # Get the latest tag or default to v0.0.0
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest version: $VERSION"
+
+          # If no tags exist, create the initial v0.0.0 tag
           if [[ "$VERSION" == "v0.0.0" ]]; then
             echo "No tags found, creating v0.0.0 tag"
             git tag v0.0.0
-            git push origin v0.0.0  # Push the initial tag
+            git push origin v0.0.0
           fi
 
-          # Check if there are new commits since the last tag
-          if [[ $(git rev-list $VERSION..HEAD --count) -eq 0 ]]; then
-            echo "No new commits since last tag, nothing to do."
-            exit 0
-          fi
-
-          # Split the version string into MAJOR, MINOR, and PATCH
+          # Remove the 'v' prefix for version splitting
+          VERSION_NO_V=${VERSION#v}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NO_V"
 
           # Check commit messages for versioning type
           COMMITS=$(git log --oneline $VERSION..HEAD)
           while IFS= read -r commit; do
-            if [[ "$commit" =~ #NEW ]]; then
-              MAJOR=$((MAJOR+1))
+            if [[ "$commit" =~ "#NEW" ]]; then
+              MAJOR=$((MAJOR + 1))
               MINOR=0
               PATCH=0
               break
-            elif [[ "$commit" =~ #FEAT ]]; then
-              MINOR=$((MINOR+1))
+            elif [[ "$commit" =~ "#FEAT" ]]; then
+              MINOR=$((MINOR + 1))
               PATCH=0
-            elif [[ "$commit" =~ #FIX ]]; then
-              PATCH=$((PATCH+1))
+            elif [[ "$commit" =~ "#FIX" ]]; then
+              PATCH=$((PATCH + 1))
             fi
           done <<< "$COMMITS"
 
-          # Increment PATCH if no versioning type was found
+          # If no versioning type was found, increment PATCH by default
           if [[ $MAJOR -eq ${MAJOR} && $MINOR -eq ${MINOR} && $PATCH -eq ${PATCH} ]]; then
-            PATCH=$((PATCH+1))
+            PATCH=$((PATCH + 1))
           fi
 
           # New version
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo "New version: $NEW_VERSION"
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-      - name: Set git config
+      - name: Create and push new tag
         run: |
-          git config --global user.name "Khoubaib"
-          git config --global user.email "khoubaib.bnz@gmail.com"
-
-      - name: Create and push new version tag
-        run: |
-          git tag ${{ env.VERSION }}
-          git push origin ${{ env.VERSION }}
+          git tag ${{ env.NEW_VERSION }}
+          git push origin ${{ env.NEW_VERSION }}
