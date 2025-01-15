@@ -1,0 +1,60 @@
+name: Auto Version Increment and Tag
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get latest version
+        id: version
+        run: |
+          # Get the latest tag (e.g., 1.0.0)
+          VERSION=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "Latest version: $VERSION"
+
+          # Split version into an array (MAJOR.MINOR.PATCH)
+          IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
+          
+          # Set default version increments
+          MAJOR=${VERSION_ARRAY[0]}
+          MINOR=${VERSION_ARRAY[1]}
+          PATCH=${VERSION_ARRAY[2]}
+
+          # Check commit messages for versioning type (MAJOR, MINOR, PATCH)
+          COMMITS=$(git log --oneline $VERSION..HEAD)
+          for commit in "$COMMITS"; do
+            if [[ "$commit" =~ #NEW ]]; then
+              MAJOR=$((MAJOR+1))
+              MINOR=0
+              PATCH=0
+              break
+            elif [[ "$commit" =~ #FEAT ]]; then
+              MINOR=$((MINOR+1))
+              PATCH=0
+            elif [[ "$commit" =~ #FIX ]]; then
+              PATCH=$((PATCH+1))
+            fi
+          done
+
+          # If no versioning tag found in the commit message, increment PATCH
+          if [[ $MAJOR -eq ${VERSION_ARRAY[0]} && $MINOR -eq ${VERSION_ARRAY[1]} && $PATCH -eq ${VERSION_ARRAY[2]} ]]; then
+            PATCH=$((PATCH+1))
+          fi
+
+          # New version based on commit analysis
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "New version: $NEW_VERSION"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Create and push new version tag
+        run: |
+          # Tag the new version in Git
+          git tag ${{ env.VERSION }}
+          git push origin ${{ env.VERSION }}
