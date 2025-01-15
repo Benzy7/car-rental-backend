@@ -19,4 +19,3 @@ class CarFavoriteListSerializer(serializers.ModelSerializer):
     def get_main_image(self, obj):
         main_image = obj.car_images.first()
         return main_image.image.url if main_image else None
-
