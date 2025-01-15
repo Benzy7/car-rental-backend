@@ -19,7 +19,7 @@ jobs:
           # Check for the latest tag and default to v0.0.0 if no tag is found
           VERSION=$(git tag -l | sort -V | tail -n 1 || echo "v0.0.0")
           echo "Latest version: $VERSION"
-          
+
           # If no tags exist (first run), create the initial v0.0.0 tag
           if [[ "$VERSION" == "v0.0.0" ]]; then
             echo "No tags found, creating v0.0.0 tag"
@@ -27,8 +27,11 @@ jobs:
             git push origin v0.0.0  # Push the initial tag
           fi
 
+          # Remove the 'v' prefix from the version string
+          VERSION=${VERSION#v}
+
           # Split the version string into an array (MAJOR.MINOR.PATCH)
-          IFS='.' read -r -a VERSION_ARRAY <<< "${VERSION#v}"
+          IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
