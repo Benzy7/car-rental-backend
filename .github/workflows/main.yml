@@ -3,54 +3,57 @@ name: Auto Version Increment and Tag
 on:
   push:
     branches:
-      - master
+      - master  # Trigger on pushes to the master branch
 
 jobs:
   version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # Checkout the repository
 
       - name: Get latest version
         id: version
         run: |
-          # Get the latest tag (e.g., 1.0.0)
+          # Get the latest tag (e.g., v1.0.0), or set to v0.0.0 if no tag is found
           VERSION=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           echo "Latest version: $VERSION"
 
-          # Split version into an array (MAJOR.MINOR.PATCH)
+          # Split the version string into an array (MAJOR.MINOR.PATCH)
           IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
           
-          # Set default version increments
+          # Default version increments (extracting MAJOR, MINOR, PATCH from the version string)
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
 
           # Check commit messages for versioning type (MAJOR, MINOR, PATCH)
-          COMMITS=$(git log --oneline $VERSION..HEAD)
+          COMMITS=$(git log --oneline $VERSION..HEAD)  # Get the commits since the last version tag
           for commit in "$COMMITS"; do
-            if [[ "$commit" =~ #NEW ]]; then
+            if [[ "$commit" =~ #NEW ]]; then  # Major version increment for breaking changes
               MAJOR=$((MAJOR+1))
               MINOR=0
               PATCH=0
               break
-            elif [[ "$commit" =~ #FEAT ]]; then
+            elif [[ "$commit" =~ #FEAT ]]; then  # Minor version increment for new features
               MINOR=$((MINOR+1))
               PATCH=0
-            elif [[ "$commit" =~ #FIX ]]; then
+            elif [[ "$commit" =~ #FIX ]]; then  # Patch version increment for fixes
               PATCH=$((PATCH+1))
             fi
           done
 
-          # If no versioning tag found in the commit message, increment PATCH
+          # If no versioning tag was found in the commit messages, increment the PATCH by default
           if [[ $MAJOR -eq ${VERSION_ARRAY[0]} && $MINOR -eq ${VERSION_ARRAY[1]} && $PATCH -eq ${VERSION_ARRAY[2]} ]]; then
             PATCH=$((PATCH+1))
           fi
 
-          # New version based on commit analysis
+          # Construct the new version
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "New version: $NEW_VERSION"
+          
+          # Set the new version as an environment variable to be used in later steps
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Create and push new version tag
