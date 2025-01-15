@@ -16,24 +16,19 @@ jobs:
       - name: Get latest version
         id: version
         run: |
-          # Check if any tags exist, default to v0.0.0 if no tags are found
-          VERSION=$(git tag -l | sort -V | tail -n 1)
-          if [ -z "$VERSION" ]; then
-            VERSION="v0.0.0"
-          fi
+          # Check for the latest tag and default to v0.0.0 if no tag is found
+          VERSION=$(git tag -l | sort -V | tail -n 1 || echo "v0.0.0")
           echo "Latest version: $VERSION"
-
+          
           # If no tags exist (first run), create the initial v0.0.0 tag
           if [[ "$VERSION" == "v0.0.0" ]]; then
             echo "No tags found, creating v0.0.0 tag"
             git tag v0.0.0
-            git push origin v0.0.0
+            git push origin v0.0.0  # Push the initial tag
           fi
 
           # Split the version string into an array (MAJOR.MINOR.PATCH)
           IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
-          
-          # Default version increments (extracting MAJOR.MINOR.PATCH from the version string)
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
@@ -54,21 +49,18 @@ jobs:
             fi
           done
 
-          # If no versioning tag was found in the commit messages, increment the PATCH by default
+          # Increment the PATCH if no versioning type was found
           if [[ $MAJOR -eq ${VERSION_ARRAY[0]} && $MINOR -eq ${VERSION_ARRAY[1]} && $PATCH -eq ${VERSION_ARRAY[2]} ]]; then
             PATCH=$((PATCH+1))
           fi
 
-          # Construct the new version
+          # New version
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "New version: $NEW_VERSION"
-
-          # Set the new version as an environment variable to be used in later steps
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Create and push new version tag
         run: |
-          # Tag the new version in Git
+          # Create and push the new tag (if it's a new version)
           git tag ${{ env.VERSION }}
           git push origin ${{ env.VERSION }}
-  
