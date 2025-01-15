@@ -13,3 +13,4 @@ urlpatterns = [
     path('history/<str:status_filter>/', UserBookingsHistoryView.as_view(), name='booking-history'),
     path('generate-transfer-data/', GenerateAirportTransferDataView.as_view(), name='generate-transfer-data'),
 ]
+
