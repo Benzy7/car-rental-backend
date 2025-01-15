@@ -16,14 +16,21 @@ jobs:
       - name: Get latest version
         id: version
         run: |
-          # Get the latest tag (e.g., v1.0.0), or set to v0.0.0 if no tag is found
-          VERSION=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          # Check if any tags exist, default to v0.0.0 if no tags are found
+          VERSION=$(git tag -l | sort -V | tail -n 1 || echo "v0.0.0")
           echo "Latest version: $VERSION"
-
+          
+          # If no tags exist (first run), create the initial v0.0.0 tag
+          if [[ "$VERSION" == "v0.0.0" ]]; then
+            echo "No tags found, creating v0.0.0 tag"
+            git tag v0.0.0
+            git push origin v0.0.0
+          fi
+          
           # Split the version string into an array (MAJOR.MINOR.PATCH)
           IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
           
-          # Default version increments (extracting MAJOR, MINOR, PATCH from the version string)
+          # Default version increments (extracting MAJOR.MINOR.PATCH from the version string)
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
